@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     lang_hints: str = Field("hi,en", validation_alias="BAHI_LANG_HINTS")
     codemix: bool = Field(True, validation_alias="BAHI_CODEMIX")
     reply_language: str = Field("hi", validation_alias="BAHI_REPLY_LANGUAGE")
+    tz: str = Field("Asia/Kolkata", validation_alias="BAHI_TZ")  # shop-local day boundary
 
     # --- storage ---
     database_url: str = Field(

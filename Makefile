@@ -34,6 +34,12 @@ typecheck:
 
 check: lint typecheck test ## the phase-gate trio
 
+mcp: ## run the ledger as a standalone stdio MCP server
+	cd server && .venv/bin/python -m bahi.mcp_server
+
+migrate: ## apply alembic migrations to DATABASE_URL
+	cd server && .venv/bin/alembic upgrade head
+
 clean:
 	rm -rf $(VENV) server/.mypy_cache server/.ruff_cache server/.pytest_cache
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
