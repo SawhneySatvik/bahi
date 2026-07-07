@@ -48,6 +48,14 @@ probe-llm: ## live LLM probe: make probe-llm PROFILE=sarvam TEXT="..." [ROLE=orc
 	$(LOAD_ENV); \
 	cd server && .venv/bin/python -m bahi.probes llm "$(TEXT)" --role "$(or $(ROLE),orchestrator)"
 
+eval: ## run one suite vs one profile: make eval PROFILE=sarvam SUITE=core [REPEATS=1 SLEEP=0]
+	$(LOAD_ENV); \
+	cd server && .venv/bin/python -m bahi.evals.run --suite "$(or $(SUITE),core)" \
+		--label "$(PROFILE)" --repeats "$(or $(REPEATS),1)" --sleep "$(or $(SLEEP),0)"
+
+eval-report: ## render A/B report: make eval-report RESULTS="server/evals/results/a.json server/evals/results/b.json"
+	cd server && .venv/bin/python -m bahi.evals.report $(patsubst server/%,%,$(RESULTS)) -o evals/results/report.md
+
 mcp: ## run the ledger as a standalone stdio MCP server
 	cd server && .venv/bin/python -m bahi.mcp_server
 

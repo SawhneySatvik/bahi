@@ -1,0 +1,422 @@
+# Bahi core eval suite — 40 cases across khata / billing / insights / routing /
+# chitchat, in Devanagari, romanized Hindi, English, and codemix.
+# Amounts in expectations are integer paise. See docs/metrics.md for scoring.
+suite: core
+cases:
+  # ── khata: udhaar ─────────────────────────────────────────────
+  - id: udhaar_simple_hi
+    tags: [khata, codemix]
+    turns:
+      - utterance: "Ramesh ko 200 rupaye udhaar likh do"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 20000, customer: Ramesh}
+
+  - id: udhaar_devanagari
+    lang: hi
+    tags: [khata, devanagari]
+    turns:
+      - utterance: "रमेश को दो सौ रुपये उधार लिख दो"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 20000, customer: रमेश}
+
+  - id: udhaar_english
+    lang: en
+    tags: [khata, english]
+    turns:
+      - utterance: "Add 500 rupees credit for Anita"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 50000, customer: Anita}
+
+  - id: udhaar_codemix_verb
+    tags: [khata, codemix]
+    turns:
+      - utterance: "Meena ke naam pe 75 rupaye udhaar daal do"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 7500, customer: Meena}
+
+  - id: udhaar_with_items
+    tags: [khata, items]
+    turns:
+      - utterance: "Suresh ko 2 kilo chawal ka 120 rupaye udhaar likho"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 12000, customer: Suresh}
+
+  - id: udhaar_two_customers
+    tags: [khata, multi]
+    turns:
+      - utterance: "Ramesh ko 100 aur Suresh ko 200 rupaye udhaar likho"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 10000, customer: Ramesh}
+          - {type: udhaar, amount_paise: 20000, customer: Suresh}
+
+  - id: udhaar_number_words_1900
+    tags: [khata, numbers, hard]
+    turns:
+      - utterance: "Bina ko unnees sau rupaye udhaar likh do"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 190000, customer: Bina}
+
+  - id: udhaar_number_words_1500
+    tags: [khata, numbers, hard]
+    turns:
+      - utterance: "Sharma ji ko dedh hazaar udhaar likho"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 150000, customer: Sharma ji}
+
+  # ── khata: repayments ─────────────────────────────────────────
+  - id: repayment_simple
+    tags: [khata, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Ramesh, amount_paise: 20000}
+    turns:
+      - utterance: "Ramesh ne 50 rupaye lauta diye"
+        gold_intent: khata
+        expected_tools: [record_repayment]
+        expected_ledger_delta:
+          - {type: repayment, amount_paise: 5000, customer: Ramesh}
+
+  - id: repayment_full_settle
+    tags: [khata, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Anita, amount_paise: 10000}
+    turns:
+      - utterance: "Anita ne poora hisaab chuka diya, 100 rupaye"
+        gold_intent: khata
+        expected_tools: [record_repayment]
+        expected_ledger_delta:
+          - {type: repayment, amount_paise: 10000, customer: Anita}
+
+  - id: repayment_devanagari
+    lang: hi
+    tags: [khata, devanagari, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Mohan, amount_paise: 50000}
+    turns:
+      - utterance: "मोहन ने पाँच सौ रुपये लौटाए"
+        gold_intent: khata
+        expected_tools: [record_repayment]
+        expected_ledger_delta:
+          - {type: repayment, amount_paise: 50000, customer: Mohan}
+
+  - id: repayment_exceeds_balance
+    tags: [khata, error, given, hard]
+    given:
+      transactions:
+        - {type: udhaar, customer: Ramesh, amount_paise: 10000}
+    turns:
+      - utterance: "Ramesh ne 500 rupaye wapas kar diye"
+        gold_intent: khata
+        expected_tools: [record_repayment]
+        expected_ledger_delta: []   # write must be REFUSED (exceeds ₹100 balance)
+
+  - id: repayment_unknown_customer
+    tags: [khata, error, hard]
+    turns:
+      - utterance: "Ghost ne 100 rupaye wapas kiye"
+        gold_intents_any: [khata, none]
+        expected_ledger_delta: []   # no such customer; nothing may be written
+
+  # ── khata/insights: reads ─────────────────────────────────────
+  - id: balance_query
+    tags: [khata, read, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Ramesh, amount_paise: 20000}
+        - {type: repayment, customer: Ramesh, amount_paise: 5000}
+    turns:
+      - utterance: "Ramesh ka kitna baaki hai"
+        gold_intents_any: [khata, insights]
+        expected_tools: [get_balance]
+        expected_ledger_delta: []
+
+  - id: balance_devanagari
+    lang: hi
+    tags: [khata, read, devanagari, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: रमेश, amount_paise: 30000}
+    turns:
+      - utterance: "रमेश का बैलेंस बताओ"
+        gold_intents_any: [khata, insights]
+        expected_tools: [get_balance]
+        expected_ledger_delta: []
+
+  - id: debtors_list
+    tags: [khata, read, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Ramesh, amount_paise: 20000}
+        - {type: udhaar, customer: Suresh, amount_paise: 5000}
+    turns:
+      - utterance: "kis kis ka udhaar baaki hai"
+        gold_intents_any: [khata, insights]
+        expected_tools: [list_debtors]
+        expected_ledger_delta: []
+
+  - id: multi_turn_khata_lifecycle
+    tags: [khata, multiturn]
+    turns:
+      - utterance: "Kavita ko 300 rupaye udhaar likho"
+        gold_intent: khata
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 30000, customer: Kavita}
+      - utterance: "Kavita ne 100 wapas kar diye"
+        gold_intent: khata
+        expected_tools: [record_repayment]
+        expected_ledger_delta:
+          - {type: repayment, amount_paise: 10000, customer: Kavita}
+      - utterance: "ab Kavita ka kitna baaki hai"
+        gold_intents_any: [khata, insights]
+        expected_tools: [get_balance]
+        expected_ledger_delta: []
+
+  # ── billing ───────────────────────────────────────────────────
+  - id: sale_simple
+    tags: [billing, codemix]
+    turns:
+      - utterance: "150 rupaye ki sale likh lo"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 15000}
+
+  - id: sale_devanagari
+    lang: hi
+    tags: [billing, devanagari]
+    turns:
+      - utterance: "तीन सौ रुपये की बिक्री दर्ज करो"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 30000}
+
+  - id: sale_english
+    lang: en
+    tags: [billing, english]
+    turns:
+      - utterance: "Record a sale of 250 rupees"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 25000}
+
+  - id: sale_number_words_250
+    tags: [billing, numbers, hard]
+    turns:
+      - utterance: "dhai sau rupaye ki sale hui"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 25000}
+
+  - id: sale_fractional_rupees
+    tags: [billing, numbers, hard]
+    turns:
+      - utterance: "sadhe bara rupaye ki sale likho"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 1250}
+
+  - id: sale_with_items
+    tags: [billing, items]
+    turns:
+      - utterance: "2 packet biscuit 40 rupaye ki sale likho"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 4000}
+
+  - id: sale_with_customer
+    tags: [billing, hard]
+    turns:
+      - utterance: "Anita ne 90 rupaye ka saman kharida, cash mein"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 9000, customer: Anita}
+
+  - id: sale_two_in_one
+    tags: [billing, multi]
+    turns:
+      - utterance: "ek sale 100 ki aur ek 200 ki likh do"
+        gold_intent: billing
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 10000}
+          - {type: sale, amount_paise: 20000}
+
+  # ── insights ──────────────────────────────────────────────────
+  - id: day_summary_today
+    tags: [insights, given]
+    given:
+      transactions:
+        - {type: sale, amount_paise: 15000}
+        - {type: udhaar, customer: Ramesh, amount_paise: 20000}
+    turns:
+      - utterance: "aaj ka hisaab batao"
+        gold_intent: insights
+        expected_tools: [day_summary]
+        expected_ledger_delta: []
+
+  - id: day_sales_devanagari
+    lang: hi
+    tags: [insights, devanagari, given]
+    given:
+      transactions:
+        - {type: sale, amount_paise: 10000}
+    turns:
+      - utterance: "आज कितनी बिक्री हुई"
+        gold_intent: insights
+        expected_tools: [day_summary]
+        expected_ledger_delta: []
+
+  - id: day_sales_english
+    lang: en
+    tags: [insights, english, given]
+    given:
+      transactions:
+        - {type: sale, amount_paise: 22000}
+    turns:
+      - utterance: "How much did we sell today?"
+        gold_intent: insights
+        expected_tools: [day_summary]
+        expected_ledger_delta: []
+
+  - id: total_udhaar_outstanding
+    tags: [insights, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Ramesh, amount_paise: 20000}
+        - {type: udhaar, customer: Suresh, amount_paise: 5000}
+    turns:
+      - utterance: "total kitna udhaar market mein hai"
+        gold_intents_any: [insights, khata]
+        expected_tools: [list_debtors]
+        expected_ledger_delta: []
+
+  - id: cash_in_today
+    tags: [insights, given]
+    given:
+      transactions:
+        - {type: sale, amount_paise: 12000}
+        - {type: udhaar, customer: Anita, amount_paise: 10000}
+        - {type: repayment, customer: Anita, amount_paise: 4000}
+    turns:
+      - utterance: "aaj cash kitna aaya"
+        gold_intent: insights
+        expected_tools: [day_summary]
+        expected_ledger_delta: []
+
+  - id: biggest_debtor
+    tags: [insights, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Ramesh, amount_paise: 20000}
+        - {type: udhaar, customer: Suresh, amount_paise: 45000}
+    turns:
+      - utterance: "sabse zyada udhaar kiska baaki hai"
+        gold_intents_any: [insights, khata]
+        expected_tools: [list_debtors]
+        expected_ledger_delta: []
+
+  # ── multi-intent routing ──────────────────────────────────────
+  - id: multi_sale_and_udhaar
+    tags: [routing, multi]
+    turns:
+      - utterance: "150 ki sale likho aur Suresh ko 100 rupaye udhaar"
+        gold_intents: [billing, khata]
+        expected_tools: [add_sale, add_udhaar]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 15000}
+          - {type: udhaar, amount_paise: 10000, customer: Suresh}
+
+  - id: multi_udhaar_and_balance
+    tags: [routing, multi, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Ramesh, amount_paise: 20000}
+    turns:
+      - utterance: "Meena ko 50 udhaar do aur batao Ramesh ka kitna baaki hai"
+        gold_intents: [khata]
+        expected_tools: [add_udhaar]
+        expected_ledger_delta:
+          - {type: udhaar, amount_paise: 5000, customer: Meena}
+
+  - id: sale_then_summary
+    tags: [routing, multi]
+    turns:
+      - utterance: "100 ki sale likh ke aaj ka total batao"
+        gold_intents: [billing]
+        expected_tools: [add_sale]
+        expected_ledger_delta:
+          - {type: sale, amount_paise: 10000}
+
+  - id: repayment_and_sale
+    tags: [routing, multi, given]
+    given:
+      transactions:
+        - {type: udhaar, customer: Anita, amount_paise: 30000}
+    turns:
+      - utterance: "Anita ne 200 rupaye wapas kiye aur 50 ki sale bhi hui"
+        gold_intents: [khata, billing]
+        expected_tools: [record_repayment, add_sale]
+        expected_ledger_delta:
+          - {type: repayment, amount_paise: 20000, customer: Anita}
+          - {type: sale, amount_paise: 5000}
+
+  # ── chitchat / out of scope (routing distractors) ─────────────
+  - id: greeting
+    tags: [none]
+    turns:
+      - utterance: "namaste, kaise ho"
+        gold_intents_any: [none]
+        expected_ledger_delta: []
+
+  - id: thanks
+    tags: [none]
+    turns:
+      - utterance: "theek hai, dhanyavad"
+        gold_intents_any: [none]
+        expected_ledger_delta: []
+
+  - id: out_of_scope_weather
+    tags: [none, hard]
+    turns:
+      - utterance: "kal mausam kaisa rahega"
+        gold_intents_any: [none]
+        expected_ledger_delta: []
+
+  - id: capability_question
+    tags: [none]
+    turns:
+      - utterance: "tum kya kya kar sakte ho"
+        gold_intents_any: [none]
+        expected_ledger_delta: []
+
+  - id: udhaar_missing_amount
+    tags: [khata, clarify, hard]
+    turns:
+      - utterance: "Ramesh ka udhaar likh do"
+        gold_intents_any: [khata, none]   # clarifying question, either level
+        expected_ledger_delta: []          # nothing may be written without an amount
