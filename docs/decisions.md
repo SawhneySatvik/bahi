@@ -66,4 +66,12 @@ contract change forced by a real API surprise (see Phase 0.5 spike).
 
 ## Amendments
 
-*(none yet — base.py contracts survived the spike unchanged)*
+- **2026-07-08 (Phase 2)** — `Message` gained `name: str | None` (tool name on
+  `role="tool"` messages): Gemini's `functionResponse` keys tool results by *name*,
+  not by call id. Sarvam/OpenAI ignore it and use `tool_call_id`. Purely additive.
+- **2026-07-08 (Phase 2)** — Adapters use raw REST via httpx (no vendor SDKs at all):
+  shapes are pinned by the Phase 0.5 fixtures, adapters stay transparent, and the
+  no-SDK-outside-adapters rule is trivially true. httpx promoted to runtime dep.
+- **2026-07-08 (Phase 2, live probe)** — Saaras codemix normalizes speech to symbols
+  ("do sau rupaye" → "₹200") — WER normalizer must fold currency symbols and number
+  words bidirectionally.

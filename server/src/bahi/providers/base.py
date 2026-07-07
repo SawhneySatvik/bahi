@@ -133,6 +133,7 @@ class Message:
     content: str | None = None
     tool_calls: tuple[ToolCall, ...] = field(default_factory=tuple)
     tool_call_id: str | None = None
+    name: str | None = None  # tool name on role="tool" (Gemini keys results by name)
 
 
 @dataclass(frozen=True)

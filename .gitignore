@@ -21,6 +21,7 @@ build/
 
 # spike / throwaway
 scratch/
+probe_*.wav
 
 # node / next
 node_modules/
