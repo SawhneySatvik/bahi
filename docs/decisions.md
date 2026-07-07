@@ -37,6 +37,12 @@ contract change forced by a real API surprise (see Phase 0.5 spike).
 - Gemini: default pin `gemini-2.5-flash` ($0.30/$2.50 per M, free tier, native function calling).
 - Vercel Python: feasible w/ caveats — 4.5MB body cap, 10s (Hobby)/60s (Pro) timeout,
   ephemeral FS → Neon Postgres required. Go/no-go at Phase 8 vs measured turn latency.
+- OpenAI (verified 2026-07-08, developers.openai.com): small tier = `gpt-5.4-mini`
+  ($0.75 / $0.075 cached / $4.50 per 1M) and `gpt-5.4-nano` ($0.20/$1.25); `gpt-4o-mini`
+  EOL (snapshots shut down 2026-07-23). Chat Completions `tools`/`tool_choice`/`tool_calls`
+  still supported (Responses API recommended for new builds, but CC is the thinner,
+  more portable adapter surface). GOTCHA: 5.4 models don't support tool calling with
+  `reasoning: none` — the adapter must not send it. Default pin: `gpt-5.4-mini`.
 
 ## Amendments
 
