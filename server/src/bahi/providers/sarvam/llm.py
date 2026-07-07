@@ -5,6 +5,7 @@ from typing import Any
 
 import httpx
 
+from bahi.providers._http import post_with_retry
 from bahi.providers.base import AssistantTurn, LLMUsage, Message, ToolCall, ToolSpec
 from bahi.providers.sarvam import BASE_URL, raise_readable, require_key
 
@@ -79,7 +80,7 @@ class SarvamLLM:
             ]
             body["tool_choice"] = "auto"
 
-        resp = self._client.post("/v1/chat/completions", json=body)
+        resp = post_with_retry(self._client, "/v1/chat/completions", json_body=body)
         raise_readable(resp, "chat")
         payload = resp.json()
         message = (payload.get("choices") or [{}])[0].get("message", {})

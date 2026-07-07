@@ -5,6 +5,7 @@ from typing import Any
 
 import httpx
 
+from bahi.providers._http import post_with_retry
 from bahi.providers.base import AssistantTurn, LLMUsage, Message, ToolCall, ToolSpec
 
 BASE_URL = "https://generativelanguage.googleapis.com"
@@ -87,7 +88,9 @@ class GeminiLLM:
                 }
             ]
 
-        resp = self._client.post(f"/v1beta/models/{model}:generateContent", json=body)
+        resp = post_with_retry(
+            self._client, f"/v1beta/models/{model}:generateContent", json_body=body
+        )
         if resp.status_code >= 400:
             raise RuntimeError(f"Gemini chat failed ({resp.status_code}): {resp.text[:500]}")
         payload = resp.json()

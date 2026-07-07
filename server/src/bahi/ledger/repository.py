@@ -196,11 +196,16 @@ class LedgerRepository:
 
     def day_summary(self, day: str | None = None) -> dict[str, Any]:
         """Totals for one shop-local calendar day (day: YYYY-MM-DD, default today)."""
-        local_date = (
-            datetime.strptime(day, "%Y-%m-%d").date()
-            if day
-            else datetime.now(self._tz).date()
-        )
+        try:
+            local_date = (
+                datetime.strptime(day, "%Y-%m-%d").date()
+                if day
+                else datetime.now(self._tz).date()
+            )
+        except ValueError:
+            raise LedgerError(
+                f"day must be YYYY-MM-DD (got {day!r}); omit it for today"
+            ) from None
         start_local = datetime.combine(local_date, datetime.min.time(), tzinfo=self._tz)
         start_utc = start_local.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
         end_utc = start_utc + timedelta(days=1)

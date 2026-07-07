@@ -75,3 +75,16 @@ contract change forced by a real API surprise (see Phase 0.5 spike).
 - **2026-07-08 (Phase 2, live probe)** — Saaras codemix normalizes speech to symbols
   ("do sau rupaye" → "₹200") — WER normalizer must fold currency symbols and number
   words bidirectionally.
+- **2026-07-08 (Phase 3, live smoke findings)** —
+  (a) LLMs don't know today's date: insights agent passed a stale date to day_summary
+  and got zeros → `prompts.today_line(tz)` appended to every system prompt at runtime.
+  (b) 105B orchestrator can spiral into "verification" re-delegations → DelegateBoard
+  dedupes identical (specialist, instruction) pairs (replays prior reply, guards the
+  ledger against double writes) + prompt rule "one delegation per action".
+  (c) sarvam-30b needed few-shot examples in specialist prompts to reliably record
+  anonymous sales; 105B once leaked textual `<tool_call>` markup → no-markup prompt rule.
+  (d) Gemini free tier is 5 RPM on gemini-2.5-flash (observed 429) → `_http.post_with_retry`
+  honors 'retry in Ns'; committed Gemini profiles pin gemini-2.5-flash-lite (own quota
+  bucket); flash remains one env var away. Eval runner must expect rate-limit pacing.
+  (e) gemini-2.5-flash-lite sometimes returns empty text after tool results → TurnEngine
+  falls back to the last specialist reply so a turn is never silent.
