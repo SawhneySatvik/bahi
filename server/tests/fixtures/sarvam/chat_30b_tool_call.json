@@ -1,0 +1,80 @@
+{
+  "status": 200,
+  "request": {
+    "model": "sarvam-30b",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You manage a shop ledger. Use tools."
+      },
+      {
+        "role": "user",
+        "content": "Ramesh ko 200 rupaye udhaar likh do"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "add_udhaar",
+          "description": "Record credit (udhaar) given to a customer",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "customer_name": {
+                "type": "string"
+              },
+              "amount_paise": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "customer_name",
+              "amount_paise"
+            ]
+          }
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "temperature": 0
+  },
+  "response": {
+    "id": "20260707_50c68f6a-04ec-419d-bc41-a521df24524f",
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": null,
+          "refusal": null,
+          "reasoning_content": "We need to record credit (udhaar) given to a customer. The tool add_udhaar expects customer_name and amount_paise. The user says \"Ramesh ko 200 rupaye udhaar likho\". So we need to call add_udhaar with customer_name \"Ramesh\" and amount_paise 200 (rupees). Probably amount in paise? The tool expects amount_paise integer. So 200 rupees = 200*100 = 20000 paise? But maybe they just want 200. The description: \"Record credit (udhaar) given to a customer\". amount_paise: number. Likely they want amount in rupees as integer. We'll pass 200.\n\nWe need to call the function.",
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_0b714378490d454c8d024a00",
+              "type": "function",
+              "function": {
+                "name": "add_udhaar",
+                "arguments": "{\"customer_name\": \"Ramesh\", \"amount_paise\": 200}"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1783457507,
+    "model": "sarvam-30b",
+    "object": "chat.completion",
+    "service_tier": null,
+    "system_fingerprint": null,
+    "usage": {
+      "completion_tokens": 209,
+      "prompt_tokens": 126,
+      "total_tokens": 335,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    }
+  }
+}

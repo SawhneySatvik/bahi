@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "request": {
+    "model": "saaras:v3",
+    "mode": "codemix",
+    "file": "<wav bytes>"
+  },
+  "response": {
+    "request_id": "20260707_9fe3a8f7-ba18-4623-a6fd-bb185e252e68",
+    "transcript": "रमेश को दो सौ रुपये उधार लिख दो",
+    "language_code": "hi-IN",
+    "language_probability": 1.0
+  }
+}

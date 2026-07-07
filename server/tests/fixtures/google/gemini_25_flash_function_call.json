@@ -1,0 +1,89 @@
+{
+  "status": 200,
+  "request": {
+    "system_instruction": {
+      "parts": [
+        {
+          "text": "You manage a shop ledger. Use tools."
+        }
+      ]
+    },
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Ramesh ko 200 rupaye udhaar likh do"
+          }
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "functionDeclarations": [
+          {
+            "name": "add_udhaar",
+            "description": "Record credit (udhaar) given to a customer",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "customer_name": {
+                  "type": "string"
+                },
+                "amount_paise": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "customer_name",
+                "amount_paise"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "temperature": 0
+    }
+  },
+  "response": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "functionCall": {
+                "name": "add_udhaar",
+                "args": {
+                  "customer_name": "Ramesh",
+                  "amount_paise": 20000
+                }
+              },
+              "thoughtSignature": "CsICARFNMg9StnN+uNhXT0hicJqxDY6IyLS4kJ3Mg+AbQLKPo6HYixY6XY6uKGTFs6G4E5IbeHRaah7cquERww4v36aliXhk1Q78b9eB7kmvjxEO3FfpTFXdBPYA1YHXu6Hx+h13FPEdHrIqBJ1NQHEy3dqEPTGKB1gQ8ywYLOXOdnOWzOTc5fKqPQMPC+MMOZpAkekxDD4qNxQoh2wr7X3NfI90DoOL7ocwGLWyAwK1SJrEAOO/cOCU3GPdNjiI/i143S52aI8zkGgvYp1Y/eFf3P3SkpijIw/0PK2NdCH5M1wFGDQgrhx1MDRBiqDjbY08Uew7LI6g5TiiEg9I2qDqGBkXtOcqpW87ziq49DyDmKWrvcQ7W7I+dLiXE4kPbjYhDUXqtFW+5LDvEDH7ZsnO580O+cXlq3giAM315pc8CVDRBg=="
+            }
+          ],
+          "role": "model"
+        },
+        "finishReason": "STOP",
+        "index": 0,
+        "finishMessage": "Model generated function call(s)."
+      }
+    ],
+    "usageMetadata": {
+      "promptTokenCount": 88,
+      "candidatesTokenCount": 31,
+      "totalTokenCount": 220,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 88
+        }
+      ],
+      "thoughtsTokenCount": 101,
+      "serviceTier": "standard"
+    },
+    "modelVersion": "gemini-2.5-flash",
+    "responseId": "vWZNasjCNeGijuMPu5CriAw"
+  }
+}

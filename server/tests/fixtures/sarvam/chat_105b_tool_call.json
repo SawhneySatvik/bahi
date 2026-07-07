@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "response": {
+    "id": "20260707_d5bf6917-1197-40ed-9096-7a23a027a92f",
+    "choices": [
+      {
+        "finish_reason": "tool_calls",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": null,
+          "refusal": null,
+          "reasoning_content": "We need to record credit (udhaar) given to a customer. The user says \"Ramesh ko 200 rupaye udhaar likh do\". So we need to call add_udhaar with customer_name \"Ramesh\" and amount_paise = 200 rupees = 200 * 100 = 20000 paise.\n\nWe should call the function.",
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_1c134edbc7714e06818cfb31",
+              "type": "function",
+              "function": {
+                "name": "add_udhaar",
+                "arguments": "{\"customer_name\": \"Ramesh\", \"amount_paise\": 20000}"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "created": 1783457507,
+    "model": "sarvam-105b",
+    "object": "chat.completion",
+    "service_tier": null,
+    "system_fingerprint": null,
+    "usage": {
+      "completion_tokens": 124,
+      "prompt_tokens": 126,
+      "total_tokens": 250,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    }
+  }
+}

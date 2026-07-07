@@ -44,6 +44,26 @@ contract change forced by a real API surprise (see Phase 0.5 spike).
   more portable adapter surface). GOTCHA: 5.4 models don't support tool calling with
   `reasoning: none` — the adapter must not send it. Default pin: `gpt-5.4-mini`.
 
+## Phase 0.5 spike verdicts (2026-07-08, live API calls; fixtures in server/tests/fixtures/)
+
+- **Sarvam chat tool-calling: CONFIRMED NATIVE** on both `sarvam-30b` and `sarvam-105b` —
+  OpenAI-compatible request (`tools`, `tool_choice`) and response (`message.tool_calls[]`
+  with `function.arguments` as a JSON *string* the adapter must parse). Auth for chat is
+  `Authorization: Bearer`; speech uses `api-subscription-key`. No `base.py` change needed;
+  the JSON-prompting fallback is retired.
+- **Observed model-tier gap**: same prompt, 30B returned `amount_paise: 200` (unit error),
+  105B returned `20000` (correct). Supports the 105B-orchestrator tiering and becomes a
+  seeded eval case (rupee→paise conversion).
+- **Bulbul v3**: returns base64 WAV in `audios[]` at **22050 Hz mono**; bulbul:v3 speaker
+  list differs from v2 (`anushka` invalid → profile pins `priya`).
+- **Saaras v3 codemix**: TTS→STT round-trip returned a perfect Devanagari transcript
+  ("रमेश को दो सौ रुपये उधार लिख दो") — note full Devanagari output incl. number words;
+  WER normalization (script folding, number-word folding) is mandatory for fair A/B.
+- **Gemini 2.5 Flash**: function-calling PASS; `usageMetadata` splits `thoughtsTokenCount`
+  (101 on this call) from `candidatesTokenCount` — adapter counts thoughts as billed
+  output tokens in `LLMUsage`.
+- ElevenLabs + OpenAI spikes: scripted, skip pending keys; must run before Phase 6 adapters.
+
 ## Amendments
 
-*(none yet)*
+*(none yet — base.py contracts survived the spike unchanged)*

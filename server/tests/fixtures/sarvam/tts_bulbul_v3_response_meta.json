@@ -1,0 +1,16 @@
+{
+  "status": 200,
+  "request": {
+    "text": "Ramesh ko do sau rupaye udhaar likh do",
+    "model": "bulbul:v3",
+    "speaker": "priya",
+    "target_language_code": "hi-IN"
+  },
+  "response_keys": [
+    "audios",
+    "request_id"
+  ],
+  "response_sans_audio": {
+    "request_id": "20260707_a6d523ec-f682-4ad0-9853-f39f801aa019"
+  }
+}
