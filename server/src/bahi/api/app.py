@@ -50,6 +50,41 @@ def create_app() -> FastAPI:
     def turn(body: TurnRequest) -> dict[str, Any]:
         return get_engine().run_text_turn(body.text).to_dict()
 
+    @app.get("/api/ledger")
+    def ledger() -> dict[str, Any]:
+        from bahi.ledger.db import session_scope
+        from bahi.ledger.repository import LedgerRepository, rupees
+
+        with session_scope() as session:
+            repo = LedgerRepository(session, tz=get_settings().tz)
+            customers = repo.list_customers_with_balances()
+            recent = repo.recent_transactions(20)
+            today = repo.day_summary()
+            return {
+                "customers": [
+                    {"name": c.name, "balance_paise": b, "balance": rupees(b)}
+                    for c, b in customers
+                ],
+                "transactions": [
+                    {
+                        "id": t.id,
+                        "type": t.type,
+                        "amount_paise": t.amount_paise,
+                        "amount": rupees(t.amount_paise),
+                        "customer": t.customer.name if t.customer else None,
+                        "ts": t.ts.isoformat(timespec="seconds"),
+                    }
+                    for t in recent
+                ],
+                "today": {
+                    "date": today["date"],
+                    "sales": rupees(today["sales_paise"]),
+                    "udhaar_given": rupees(today["udhaar_given_paise"]),
+                    "repayments_received": rupees(today["repayments_received_paise"]),
+                    "cash_in": rupees(today["cash_in_paise"]),
+                },
+            }
+
     @app.post("/api/turn/audio")
     async def turn_audio(file: UploadFile = File(...)) -> dict[str, Any]:  # noqa: B008
         raw = await file.read()

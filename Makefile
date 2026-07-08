@@ -63,6 +63,12 @@ eval-audio-synth: ## generate synthetic eval audio with the profile's TTS
 	$(LOAD_ENV); \
 	cd server && .venv/bin/python -m bahi.evals.audio_synth --suite "$(or $(SUITE),audio_core)"
 
+client: ## run the Next.js voice console (expects `make run` on :8000)
+	cd client && npm run dev
+
+client-check: ## client gate: eslint + tsc + production build
+	cd client && npx eslint . && npx tsc --noEmit && npm run build
+
 mcp: ## run the ledger as a standalone stdio MCP server
 	cd server && .venv/bin/python -m bahi.mcp_server
 

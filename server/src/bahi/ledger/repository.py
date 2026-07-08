@@ -189,6 +189,19 @@ class LedgerRepository:
 
     # --- queries ---
 
+    def list_customers_with_balances(self) -> list[tuple[Customer, int]]:
+        customers = list(self._s.scalars(select(Customer).order_by(Customer.name)))
+        return [(c, self.balance_paise(c)) for c in customers]
+
+    def recent_transactions(self, limit: int = 20) -> list[Transaction]:
+        return list(
+            self._s.scalars(
+                select(Transaction)
+                .order_by(Transaction.ts.desc(), Transaction.id.desc())
+                .limit(limit)
+            )
+        )
+
     def list_debtors(self) -> list[tuple[Customer, int]]:
         customers = list(self._s.scalars(select(Customer).order_by(Customer.name)))
         result = [(c, self.balance_paise(c)) for c in customers]
