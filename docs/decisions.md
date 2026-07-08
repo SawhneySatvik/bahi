@@ -110,3 +110,23 @@ contract change forced by a real API surprise (see Phase 0.5 spike).
   hardened (transport-error retry; a crashed turn records as failure, never kills the run).
   The gemini-mixed suite column is DEFERRED to Phase 6's headline A/B — to be run with
   heavy pacing (SLEEP≥8) or a paid key; smoke-level evidence (6/6 Phase 3) stands.
+- **2026-07-08 (Phase 5, voice slice live)** —
+  (a) **The 402 that wasn't**: ffmpeg piping WAV to stdout leaves the RIFF size field as
+  the 0xFFFFFFFF streaming sentinel; Sarvam's billing precheck prices that as a multi-GB
+  file and returns "No credits available". Transcode now writes a seekable temp file;
+  regression test asserts the finalized header. (Debugging lesson: a quota error that
+  reproduces per-request-shape is not a quota error.)
+  (b) **Voice suite (all-Sarvam, synthetic clips)**: task 9/10, intent 10/10, **WER 7.6%
+  mean** (6/10 clips at 0.0; failure had a perfect transcript — the khata specialist
+  over-asked for name spelling instead of recording). Cost ₹0.116/voice-turn.
+  (c) **Latency gap analysis (budget p50 ≤ 3.5s MISSED)**: measured p50 8.1s / p95 16.7s
+  with delegated routing. Breakdown: STT ~0.5-0.7s (within budget), TTS ~1.5s (budget 0.7
+  — Bulbul full-file synthesis, no streaming yet), LLM hops ~5-6s (3-4 hops: route +
+  specialist tool loop + synthesis). Path to budget: BAHI_ROUTING=direct removes ~2 LLM
+  hops (text p50 1.85s → voice ≈ 4s), TTS streaming + shorter replies recover ~1s. The
+  3.5s target needs direct routing + streaming TTS (roadmap); delegated stays the default
+  demo (richer multi-agent story), direct is the documented latency profile. Phase 6 A/B
+  reports both.
+  (d) Same-vendor circularity note: synthetic clips are Bulbul-voiced and transcribed by
+  Saaras; WER on these measures Saaras robustness to Bulbul speech, labeled as such.
+  Self-recorded clips in evals/audio/recorded/ take precedence when added.

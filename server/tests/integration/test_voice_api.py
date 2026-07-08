@@ -49,6 +49,16 @@ def test_transcode_produces_canonical_wav() -> None:
         assert w.getnchannels() == 1
 
 
+def test_transcode_finalizes_riff_header() -> None:
+    # A piped ffmpeg WAV carries the 0xFFFFFFFF streaming size sentinel, which
+    # Sarvam's billing precheck priced as a multi-GB file -> 402 (found live).
+    import struct
+
+    chunk = to_canonical_wav(_silent_wav(0.3), "audio/wav")
+    riff_size = struct.unpack("<I", chunk.data[4:8])[0]
+    assert riff_size == len(chunk.data) - 8
+
+
 def test_transcode_rejects_garbage() -> None:
     with pytest.raises(TranscodeError):
         to_canonical_wav(b"definitely not audio", "application/octet-stream")

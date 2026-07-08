@@ -1,0 +1,508 @@
+{
+  "label": "sarvam-voice",
+  "suite": "audio_core",
+  "timestamp": "2026-07-08T10:54:37",
+  "profile": {
+    "stt": "sarvam:saaras:v3",
+    "tts": "sarvam:bulbul:v3",
+    "orchestrator": "sarvam:sarvam-105b",
+    "specialist": "sarvam:sarvam-30b",
+    "vision": "fake:default",
+    "routing": "delegated",
+    "language": "hi,en codemix=True"
+  },
+  "routing": "delegated",
+  "repeats": 1,
+  "fx_inr_per_usd": 90.0,
+  "prices_dated": "2026-07-08",
+  "runs": [
+    {
+      "repeat": 0,
+      "aggregates": {
+        "turns": 10,
+        "intent_accuracy": 1.0,
+        "tool_correctness": 0.9,
+        "ledger_match": 0.9,
+        "task_success": 0.9,
+        "latency_p50": 8.132404666393995,
+        "latency_p95": 16.706417958252132,
+        "llm_seconds_p50": 4.363399708643556,
+        "total_cost_inr": 1.1635,
+        "unpriced_turns": 0,
+        "cost_per_turn_inr": 0.1163,
+        "input_tokens": 29906,
+        "output_tokens": 6888,
+        "audio_turns": 10,
+        "wer_mean": 0.0761
+      },
+      "cases": [
+        {
+          "id": "a_udhaar_devanagari",
+          "tags": [
+            "khata",
+            "audio"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "रमेश को 200 रुपये उधार लिख दो",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 8.132,
+              "cost_inr": 0.12441876041666668,
+              "wer": 0.0,
+              "detail": {
+                "intents": [
+                  "khata"
+                ],
+                "gold_intents": [
+                  "khata"
+                ],
+                "called_tools": [
+                  "add_udhaar",
+                  "delegate_khata"
+                ],
+                "expected_tools": [
+                  "add_udhaar"
+                ],
+                "unexpected_mutations": [],
+                "delta": [
+                  [
+                    "udhaar",
+                    20000,
+                    "ramesh"
+                  ]
+                ],
+                "expected_delta": [
+                  [
+                    "udhaar",
+                    20000,
+                    "ramesh"
+                  ]
+                ],
+                "reply": "मैंने रमेश के खाते में 200 रुपये का उधार दर्ज कर दिया है।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_udhaar_romanized",
+          "tags": [
+            "khata",
+            "audio",
+            "codemix"
+          ],
+          "lang": "hi-en",
+          "turns": [
+            {
+              "utterance": "Suresh ko 300 rupaye udhaar likh do",
+              "intents_ok": true,
+              "tools_ok": false,
+              "ledger_ok": false,
+              "task_ok": false,
+              "seconds": 16.706,
+              "cost_inr": 0.15858704046201816,
+              "wer": 0.0,
+              "detail": {
+                "intents": [
+                  "khata"
+                ],
+                "gold_intents": [
+                  "khata"
+                ],
+                "called_tools": [
+                  "delegate_khata",
+                  "find_customer"
+                ],
+                "expected_tools": [
+                  "add_udhaar"
+                ],
+                "unexpected_mutations": [],
+                "delta": [],
+                "expected_delta": [
+                  [
+                    "udhaar",
+                    30000,
+                    "suresh"
+                  ]
+                ],
+                "reply": "क्या आप Suresh का पूरा नाम या spelling बता सकते हैं? जैसे Ramesh, Mukesh वगैरह, ताकि मैं सही khata में entry कर सकूँ।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_repayment",
+          "tags": [
+            "khata",
+            "audio",
+            "given"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "रमेश ने 50 रुपये वापस किये",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 9.532,
+              "cost_inr": 0.12589664703798187,
+              "wer": 0.4,
+              "detail": {
+                "intents": [
+                  "khata"
+                ],
+                "gold_intents": [
+                  "khata"
+                ],
+                "called_tools": [
+                  "delegate_khata",
+                  "record_repayment"
+                ],
+                "expected_tools": [
+                  "record_repayment"
+                ],
+                "unexpected_mutations": [],
+                "delta": [
+                  [
+                    "repayment",
+                    5000,
+                    "ramesh"
+                  ]
+                ],
+                "expected_delta": [
+                  [
+                    "repayment",
+                    5000,
+                    "ramesh"
+                  ]
+                ],
+                "reply": "Ramesh ने ₹50 repay kiye, ab uska udhaar balance ₹150 hai।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_sale_simple",
+          "tags": [
+            "billing",
+            "audio"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "150 रुपये की बिक्री लिखो",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 5.781,
+              "cost_inr": 0.08561102083333333,
+              "wer": 0.0,
+              "detail": {
+                "intents": [
+                  "billing"
+                ],
+                "gold_intents": [
+                  "billing"
+                ],
+                "called_tools": [
+                  "add_sale",
+                  "delegate_billing"
+                ],
+                "expected_tools": [
+                  "add_sale"
+                ],
+                "unexpected_mutations": [],
+                "delta": [
+                  [
+                    "sale",
+                    15000,
+                    null
+                  ]
+                ],
+                "expected_delta": [
+                  [
+                    "sale",
+                    15000,
+                    null
+                  ]
+                ],
+                "reply": "₹150 की बिक्री दर्ज कर दी गई है।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_sale_english",
+          "tags": [
+            "billing",
+            "audio",
+            "english"
+          ],
+          "lang": "en",
+          "turns": [
+            {
+              "utterance": "Record a sale of 250 rupees",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 5.707,
+              "cost_inr": 0.07749960657596372,
+              "wer": 0.0,
+              "detail": {
+                "intents": [
+                  "billing"
+                ],
+                "gold_intents": [
+                  "billing"
+                ],
+                "called_tools": [
+                  "add_sale",
+                  "delegate_billing"
+                ],
+                "expected_tools": [
+                  "add_sale"
+                ],
+                "unexpected_mutations": [],
+                "delta": [
+                  [
+                    "sale",
+                    25000,
+                    null
+                  ]
+                ],
+                "expected_delta": [
+                  [
+                    "sale",
+                    25000,
+                    null
+                  ]
+                ],
+                "reply": "Sale of ₹250 recorded."
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_day_summary",
+          "tags": [
+            "insights",
+            "audio",
+            "given"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "आज का हिसाब बताओ",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 9.92,
+              "cost_inr": 0.12957263421201815,
+              "wer": 0.0,
+              "detail": {
+                "intents": [
+                  "insights"
+                ],
+                "gold_intents": [
+                  "insights"
+                ],
+                "called_tools": [
+                  "day_summary",
+                  "delegate_insights",
+                  "list_debtors"
+                ],
+                "expected_tools": [
+                  "day_summary"
+                ],
+                "unexpected_mutations": [],
+                "delta": [],
+                "expected_delta": [],
+                "reply": "आज की total sales ₹150 रही, cash भी ₹150 ही आया, और कोई udhaar बाक़ी नहीं है।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_balance",
+          "tags": [
+            "khata",
+            "audio",
+            "given"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "अनीता का बैलेंस बताओ",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 6.183,
+              "cost_inr": 0.08602896754535147,
+              "wer": 0.25,
+              "detail": {
+                "intents": [
+                  "insights"
+                ],
+                "gold_intents": [],
+                "called_tools": [
+                  "delegate_insights",
+                  "get_balance"
+                ],
+                "expected_tools": [
+                  "get_balance"
+                ],
+                "unexpected_mutations": [],
+                "delta": [],
+                "expected_delta": [],
+                "reply": "Anita का balance ₹300 है, यह udhaar है।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_debtors",
+          "tags": [
+            "khata",
+            "audio",
+            "given"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "किस किस का उधार बाकी है",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 10.385,
+              "cost_inr": 0.14367237379535147,
+              "wer": 0.0,
+              "detail": {
+                "intents": [
+                  "insights"
+                ],
+                "gold_intents": [],
+                "called_tools": [
+                  "delegate_insights",
+                  "list_debtors"
+                ],
+                "expected_tools": [
+                  "list_debtors"
+                ],
+                "unexpected_mutations": [],
+                "delta": [],
+                "expected_delta": [],
+                "reply": "Ramesh का ₹200 और Suresh का ₹50 उधार बाकी है, total ₹250।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_multi_intent",
+          "tags": [
+            "routing",
+            "audio",
+            "multi"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "100 की सेल लिखो और मीना को 50 रुपये उधार",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 12.587,
+              "cost_inr": 0.15200889462868483,
+              "wer": 0.1111111111111111,
+              "detail": {
+                "intents": [
+                  "billing",
+                  "khata"
+                ],
+                "gold_intents": [
+                  "billing",
+                  "khata"
+                ],
+                "called_tools": [
+                  "add_sale",
+                  "add_udhaar",
+                  "delegate_billing",
+                  "delegate_khata"
+                ],
+                "expected_tools": [
+                  "add_sale",
+                  "add_udhaar"
+                ],
+                "unexpected_mutations": [],
+                "delta": [
+                  [
+                    "sale",
+                    10000,
+                    null
+                  ],
+                  [
+                    "udhaar",
+                    5000,
+                    "meena"
+                  ]
+                ],
+                "expected_delta": [
+                  [
+                    "sale",
+                    10000,
+                    null
+                  ],
+                  [
+                    "udhaar",
+                    5000,
+                    "meena"
+                  ]
+                ],
+                "reply": "मैंने ₹100 की सेल और मीना को ₹50 का उधार रिकॉर्ड कर दिया है।"
+              }
+            }
+          ]
+        },
+        {
+          "id": "a_greeting",
+          "tags": [
+            "none",
+            "audio"
+          ],
+          "lang": "hi",
+          "turns": [
+            {
+              "utterance": "नमस्ते कैसे हो",
+              "intents_ok": true,
+              "tools_ok": true,
+              "ledger_ok": true,
+              "task_ok": true,
+              "seconds": 4.462,
+              "cost_inr": 0.08016003365929705,
+              "wer": 0.0,
+              "detail": {
+                "intents": [],
+                "gold_intents": [],
+                "called_tools": [],
+                "expected_tools": [],
+                "unexpected_mutations": [],
+                "delta": [],
+                "expected_delta": [],
+                "reply": "नमस्ते! मैं ठीक हूँ, धन्यवाद। आप कैसे हैं?"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
