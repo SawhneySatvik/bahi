@@ -57,6 +57,7 @@ def evaluate_turn(
     input_tokens: int,
     output_tokens: int,
     cost_inr: float | None,
+    errored_tools: list[str] | None = None,
 ) -> TurnEval:
     gold = set(spec.gold_intents)
     if spec.gold_intents_any:
@@ -69,7 +70,13 @@ def evaluate_turn(
 
     called = set(called_tools)
     required_ok = set(spec.expected_tools) <= called
-    unexpected_mutations = (called & MUTATING_TOOLS) - set(spec.expected_tools)
+    # An attempted mutation the ledger REFUSED (error result, no write) is
+    # legitimate discovery ("Ghost ne 100 wapas kiye" -> record_repayment ->
+    # 'no such customer'), not an unexpected mutation. Actual writes are
+    # already policed by canonical delta equality.
+    unexpected_mutations = (
+        (called & MUTATING_TOOLS) - set(spec.expected_tools) - set(errored_tools or [])
+    )
     tools_ok = required_ok and not unexpected_mutations
 
     ledger_ok = delta == expected_writes(spec.expected_ledger_delta)

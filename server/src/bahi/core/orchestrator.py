@@ -11,6 +11,7 @@ Everything here holds Protocols only — no vendor can appear in this module.
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -21,6 +22,15 @@ from bahi.core.agent_loop import AgentResult, TraceEvent, run_agent
 from bahi.mcp_server.tools import ToolRegistry, ledger_tool_registry
 from bahi.providers.base import LLMProvider, Message, ToolSpec
 from bahi.providers.factory import build_llm
+
+# Some models occasionally leak textual tool-call markup into their final text
+# (observed live on sarvam-105b). Anything like this must never be spoken.
+_MARKUP = re.compile(r"<[/]?(tool_call|arg_key|arg_value)[^>]*>.*?(?=<|$)", re.DOTALL)
+
+
+def sanitize_reply(text: str) -> str:
+    return _MARKUP.sub("", text).strip()
+
 
 SPECIALISTS: dict[str, dict[str, Any]] = {
     "khata": {
@@ -237,12 +247,14 @@ class TurnEngine:
         # Some models return empty text after tool results (observed live on
         # gemini-2.5-flash-lite) — fall back to the last specialist reply so
         # the turn is never silent.
-        reply_text = result.text.strip()
+        reply_text = sanitize_reply(result.text)
         if not reply_text:
             delegate_replies = [
-                str(e.detail.get("reply", "")) for e in board.events if e.kind == "delegate"
+                sanitize_reply(str(e.detail.get("reply", "")))
+                for e in board.events
+                if e.kind == "delegate"
             ]
-            reply_text = next((r for r in reversed(delegate_replies) if r.strip()), "")
+            reply_text = next((r for r in reversed(delegate_replies) if r), "")
         merged = AgentResult(
             text=reply_text,
             events=[*result.events, *board.events],
@@ -254,7 +266,7 @@ class TurnEngine:
 
     def _finish(self, result: AgentResult, intents: list[str], start: float) -> TurnResult:
         return TurnResult(
-            reply=result.text,
+            reply=sanitize_reply(result.text),
             routing=self._routing,
             intents=intents,
             events=result.events,

@@ -85,10 +85,34 @@ def run_case(case: CaseSpec, sleep_s: float) -> list[TurnEval]:
     evals: list[TurnEval] = []
     for spec in case.turns:
         prev_max_id, _ = _snapshot(db_url)
-        result = engine.run_text_turn(spec.utterance)
+        try:
+            result = engine.run_text_turn(spec.utterance)
+        except Exception as exc:  # noqa: BLE001 — one flaky call must not kill a 40-case run
+            evals.append(
+                evaluate_turn(
+                    spec,
+                    intents=[],
+                    called_tools=[],
+                    delta=_delta_after(db_url, prev_max_id),
+                    reply="",
+                    seconds=0.0,
+                    llm_seconds=0.0,
+                    input_tokens=0,
+                    output_tokens=0,
+                    cost_inr=0.0,
+                )
+            )
+            evals[-1].detail["exception"] = repr(exc)[:300]
+            print(f"    ! turn crashed: {exc!r}"[:160], flush=True)
+            continue
         delta = _delta_after(db_url, prev_max_id)
         called_tools = [
             event.label.rsplit(":", 1)[1] for event in result.events if event.kind == "tool"
+        ]
+        errored_tools = [
+            event.label.rsplit(":", 1)[1]
+            for event in result.events
+            if event.kind == "tool" and "error" in (event.detail.get("result") or {})
         ]
         llm_seconds = sum(e.seconds for e in result.events if e.kind == "llm")
         evals.append(
@@ -96,6 +120,7 @@ def run_case(case: CaseSpec, sleep_s: float) -> list[TurnEval]:
                 spec,
                 intents=result.intents,
                 called_tools=called_tools,
+                errored_tools=errored_tools,
                 delta=delta,
                 reply=result.reply,
                 seconds=result.seconds,

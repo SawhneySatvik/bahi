@@ -17,11 +17,13 @@ cases:
     lang: hi
     tags: [khata, devanagari]
     turns:
+      # Spec: tool arguments canonicalize names to Latin script (NAME_RULES) so a
+      # customer's khata stays unified across scripts -> gold is "Ramesh", not "रमेश".
       - utterance: "रमेश को दो सौ रुपये उधार लिख दो"
         gold_intent: khata
         expected_tools: [add_udhaar]
         expected_ledger_delta:
-          - {type: udhaar, amount_paise: 20000, customer: रमेश}
+          - {type: udhaar, amount_paise: 20000, customer: Ramesh}
 
   - id: udhaar_english
     lang: en

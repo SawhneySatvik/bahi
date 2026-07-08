@@ -8,7 +8,7 @@ manual smoke scripts share these comparators (`bahi/evals/metrics.py`).
 | Metric | Definition |
 |---|---|
 | **Intent accuracy** | Gold specialists ⊆ routed specialists. `gold_intents_any` = at least one listed intent routed (`none` sentinel accepts an un-delegated turn — used where khata/insights overlap by design, or where a clarifying question at either level is correct). Empty gold = nothing may be delegated. |
-| **Tool-call correctness** | Every `expected_tools` entry was called, AND no *mutating* tool (`add_sale`, `add_udhaar`, `record_repayment`) was called beyond those expected. Extra reads are free. |
+| **Tool-call correctness** | Every `expected_tools` entry was called, AND no *mutating* tool (`add_sale`, `add_udhaar`, `record_repayment`) was called beyond those expected — unless the ledger refused it (error result, no write): an attempted-and-refused mutation is legitimate discovery. Extra reads are free. |
 | **Ledger-state match** | Canonical delta multiset equality. A write is `(type, amount_paise, normalized_customer_or_None)`; ids and timestamps ignored; customer names compared casefolded + whitespace-collapsed. Multiset: a duplicate write fails. `[]` = the turn must write nothing (error handling, clarifications, reads). |
 | **Task success** | Ledger-state match AND a non-empty spoken reply. |
 

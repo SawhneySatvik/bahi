@@ -37,7 +37,15 @@ def post_with_retry(
 ) -> httpx.Response:
     delay = 2.0
     for attempt in range(retries + 1):
-        resp = client.post(url, json=json_body)
+        try:
+            resp = client.post(url, json=json_body)
+        except httpx.HTTPError:
+            # transport-level failure (timeout, reset) — retry like a 5xx
+            if attempt == retries:
+                raise
+            time.sleep(min(delay, MAX_SLEEP_SECONDS))
+            delay *= 3
+            continue
         if resp.status_code not in RETRYABLE or attempt == retries:
             return resp
         time.sleep(min(_suggested_delay(resp, delay), MAX_SLEEP_SECONDS))

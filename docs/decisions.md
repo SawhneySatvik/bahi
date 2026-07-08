@@ -88,3 +88,25 @@ contract change forced by a real API surprise (see Phase 0.5 spike).
   bucket); flash remains one env var away. Eval runner must expect rate-limit pacing.
   (e) gemini-2.5-flash-lite sometimes returns empty text after tool results → TurnEngine
   falls back to the last specialist reply so a turn is never silent.
+- **2026-07-08 (Phase 4, first eval baseline — the harness earned its keep)** —
+  v1 prompts scored task-success 88.1% on all-Sarvam; failure analysis produced 3 fixes:
+  (a) **Cross-script customer identity**: models transliterate रमेश→Ramesh in tool args.
+  Made Latin-script canonicalization the SPEC (NAME_RULES prompt rule + gold updated) so a
+  customer's khata stays unified whichever script they're spoken in.
+  (b) **Reply sanitizer**: leaked `<tool_call>` markup (105B, twice) is stripped before
+  speaking; empty-after-strip falls back to specialist reply.
+  (c) Billing attribution rules: attribute a sale's customer only when the purchase is
+  clearly theirs; record EVERY sale mentioned.
+  **v2 result: task-success 95.2% (both routings), intent 100%.**
+  Routing A/B (the direct-vs-delegated trade the plan predicted): direct p50 **1.85s** vs
+  delegated 3.69s at equal task success — direct is the voice-latency default candidate;
+  delegated keeps the richer synthesis. Cost: ₹0.012 vs ₹0.019/turn.
+  Remaining honest failures: Hindi number-words ("dhai sau"=250, "sadhe bara"=12.50)
+  misparsed by 105B in direct mode — kept failing as `hard`-tagged cases.
+  Metric refinement from live data: a mutating-tool attempt the ledger REFUSED (error, no
+  write) is legitimate discovery, not an unexpected mutation (actual writes are policed by
+  delta equality).
+  **Gemini quota reality**: free-tier flash-lite 429s exhausted retries mid-suite → runner
+  hardened (transport-error retry; a crashed turn records as failure, never kills the run).
+  The gemini-mixed suite column is DEFERRED to Phase 6's headline A/B — to be run with
+  heavy pacing (SLEEP≥8) or a paid key; smoke-level evidence (6/6 Phase 3) stands.

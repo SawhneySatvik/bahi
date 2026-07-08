@@ -72,6 +72,20 @@ def test_unexpected_mutation_fails_tools_even_if_required_present() -> None:
     assert not bad.tools_ok  # extra WRITE is not
 
 
+def test_refused_mutation_attempt_is_not_penalized() -> None:
+    # "Ghost ne 100 wapas kiye": attempting record_repayment and being told
+    # 'no such customer' is correct discovery — no write happened.
+    spec = _turn(expected_ledger_delta=[])
+    result = _evaluate(
+        spec,
+        called_tools=["record_repayment"],
+        errored_tools=["record_repayment"],
+    )
+    assert result.tools_ok
+    silent_write = _evaluate(spec, called_tools=["record_repayment"])
+    assert not silent_write.tools_ok
+
+
 def test_task_requires_ledger_and_nonempty_reply() -> None:
     spec = _turn(
         expected_tools=["add_sale"],

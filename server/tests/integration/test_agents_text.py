@@ -146,6 +146,19 @@ def test_direct_routing_single_hop(db: str) -> None:
     assert all(e.label.startswith("orchestrator") for e in llm_events)
 
 
+def test_reply_sanitizer_strips_leaked_tool_markup() -> None:
+    from bahi.core.orchestrator import sanitize_reply
+
+    leaked = (
+        "<tool_call>day_summary\n<arg_key>day</arg_key>\n"
+        "<arg_value>null</arg_value>\n</tool_call>"
+    )
+    assert sanitize_reply(leaked) == ""
+    mixed = "Theek hai, likh diya. <tool_call>add_sale</tool_call>"
+    assert sanitize_reply(mixed) == "Theek hai, likh diya."
+    assert sanitize_reply("₹200 udhaar likh diya.") == "₹200 udhaar likh diya."
+
+
 def test_incomplete_agent_reports_gracefully(db: str) -> None:
     orchestrator = FakeLLM()
     for _ in range(10):  # never stops calling tools -> hits max iterations
