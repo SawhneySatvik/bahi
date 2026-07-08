@@ -110,6 +110,13 @@ contract change forced by a real API surprise (see Phase 0.5 spike).
   hardened (transport-error retry; a crashed turn records as failure, never kills the run).
   The gemini-mixed suite column is DEFERRED to Phase 6's headline A/B — to be run with
   heavy pacing (SLEEP≥8) or a paid key; smoke-level evidence (6/6 Phase 3) stands.
+- **2026-07-08 (Phase 6, quota reality #2)** — the gemini-mixed full-suite column hit
+  persistent 429s even at 8s/case pacing: the free-tier **daily** request cap was consumed
+  by the day's earlier runs. Deferred to the Phase 8 README regeneration window (quota
+  resets midnight Pacific) or a paid-tier key. Correctness evidence stands meanwhile:
+  Phase 3 smoke 6/6 on gemini orchestration + 11 clean early cases in today's partial runs.
+  FDE lesson recorded: free-tier quotas are a *schedule* constraint for eval-driven work —
+  budget them like money.
 - **2026-07-08 (Phase 5, voice slice live)** —
   (a) **The 402 that wasn't**: ffmpeg piping WAV to stdout leaves the RIFF size field as
   the 0xFFFFFFFF streaming sentinel; Sarvam's billing precheck prices that as a multi-GB
