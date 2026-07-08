@@ -18,15 +18,18 @@ _REGISTRY: dict[Capability, dict[str, str]] = {
     "stt": {
         "fake": "bahi.providers.fake.stt:FakeSTT",
         "sarvam": "bahi.providers.sarvam.stt:SarvamSTT",
+        "elevenlabs": "bahi.providers.elevenlabs.stt:ElevenLabsSTT",
     },
     "tts": {
         "fake": "bahi.providers.fake.tts:FakeTTS",
         "sarvam": "bahi.providers.sarvam.tts:SarvamTTS",
+        "elevenlabs": "bahi.providers.elevenlabs.tts:ElevenLabsTTS",
     },
     "llm": {
         "fake": "bahi.providers.fake.llm:FakeLLM",
         "sarvam": "bahi.providers.sarvam.llm:SarvamLLM",
         "google": "bahi.providers.google.llm:GeminiLLM",
+        "openai": "bahi.providers.openai_.llm:OpenAILLM",
     },
     "vision": {
         "fake": "bahi.providers.fake.vision:FakeVision",

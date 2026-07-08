@@ -26,10 +26,13 @@ from bahi.providers.base import (
     ToolSpec,
     TTSProvider,
 )
+from bahi.providers.elevenlabs.stt import ElevenLabsSTT
+from bahi.providers.elevenlabs.tts import ElevenLabsTTS
 from bahi.providers.fake.llm import FakeLLM
 from bahi.providers.fake.stt import FakeSTT
 from bahi.providers.fake.tts import FakeTTS, _silent_wav
 from bahi.providers.google.llm import GeminiLLM
+from bahi.providers.openai_.llm import OpenAILLM
 from bahi.providers.sarvam.llm import SarvamLLM
 from bahi.providers.sarvam.stt import SarvamSTT
 from bahi.providers.sarvam.tts import SarvamTTS
@@ -87,6 +90,74 @@ def sarvam_transport() -> httpx.MockTransport:
     return httpx.MockTransport(handler)
 
 
+OPENAI_TOOL_RESPONSE = {
+    "choices": [
+        {
+            "message": {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {
+                        "id": "call_ab12",
+                        "type": "function",
+                        "function": {
+                            "name": "add_udhaar",
+                            "arguments": '{"customer_name": "Ramesh", "amount_paise": 20000}',
+                        },
+                    }
+                ],
+            }
+        }
+    ],
+    "model": "gpt-5.4-mini-2026-03-17",
+    "usage": {
+        "prompt_tokens": 120,
+        "completion_tokens": 30,
+        "prompt_tokens_details": {"cached_tokens": 0},
+    },
+}
+
+OPENAI_TEXT_RESPONSE = {
+    "choices": [{"message": {"role": "assistant", "content": "theek hai, likh diya."}}],
+    "model": "gpt-5.4-mini-2026-03-17",
+    "usage": {"prompt_tokens": 20, "completion_tokens": 8},
+}
+
+
+def openai_transport() -> httpx.MockTransport:
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        assert "reasoning" not in body  # 5.4 rejects tools with reasoning:none
+        assert "temperature" not in body  # fixed on gpt-5* models
+        if body.get("tools"):
+            return httpx.Response(200, json=OPENAI_TOOL_RESPONSE)
+        return httpx.Response(200, json=OPENAI_TEXT_RESPONSE)
+
+    return httpx.MockTransport(handler)
+
+
+def elevenlabs_transport() -> httpx.MockTransport:
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/v1/speech-to-text":
+            return httpx.Response(
+                200,
+                json={
+                    "language_code": "hi",
+                    "language_probability": 0.97,
+                    "text": "रमेश को दो सौ रुपये उधार लिख दो",
+                    "words": [],
+                },
+            )
+        if path.startswith("/v1/text-to-speech/"):
+            return httpx.Response(
+                200, content=b"\xff\xfb" + b"\x00" * 512, headers={"request-id": "fx"}
+            )
+        return httpx.Response(404)
+
+    return httpx.MockTransport(handler)
+
+
 def gemini_transport() -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content)
@@ -112,6 +183,7 @@ LLM_CASES: dict[str, Callable[[], tuple[LLMProvider, str]]] = {
     "fake": _fake_llm_with_tool_call,
     "sarvam": lambda: (SarvamLLM(api_key="test", transport=sarvam_transport()), "sarvam-105b"),
     "google": lambda: (GeminiLLM(api_key="test", transport=gemini_transport()), "gemini-2.5-flash"),
+    "openai": lambda: (OpenAILLM(api_key="test", transport=openai_transport()), "gpt-5.4-mini"),
 }
 
 
@@ -188,6 +260,7 @@ def test_llm_multi_hop_transcript_roundtrip(llm_case: tuple[LLMProvider, str]) -
 STT_CASES: dict[str, Callable[[], STTProvider]] = {
     "fake": FakeSTT,
     "sarvam": lambda: SarvamSTT(api_key="test", transport=sarvam_transport()),
+    "elevenlabs": lambda: ElevenLabsSTT(api_key="test", transport=elevenlabs_transport()),
 }
 
 
@@ -209,6 +282,7 @@ def test_stt_contract(stt: STTProvider) -> None:
 TTS_CASES: dict[str, Callable[[], TTSProvider]] = {
     "fake": FakeTTS,
     "sarvam": lambda: SarvamTTS(api_key="test", transport=sarvam_transport()),
+    "elevenlabs": lambda: ElevenLabsTTS(api_key="test", transport=elevenlabs_transport()),
 }
 
 
@@ -234,3 +308,7 @@ def test_vendor_adapters_demand_keys_with_actionable_errors() -> None:
         SarvamLLM(api_key=None)
     with pytest.raises(ValueError, match="GOOGLE_API_KEY"):
         GeminiLLM(api_key=None)
+    with pytest.raises(ValueError, match="ELEVENLABS_API_KEY"):
+        ElevenLabsSTT(api_key=None)
+    with pytest.raises(ValueError, match="OPENAI_API_KEY"):
+        OpenAILLM(api_key=None)
