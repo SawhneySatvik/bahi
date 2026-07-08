@@ -56,6 +56,13 @@ eval: ## run one suite vs one profile: make eval PROFILE=sarvam SUITE=core [REPE
 eval-report: ## render A/B report: make eval-report RESULTS="server/evals/results/a.json server/evals/results/b.json"
 	cd server && .venv/bin/python -m bahi.evals.report $(patsubst server/%,%,$(RESULTS)) -o evals/results/report.md
 
+smoke-voice: ## push-to-talk against a running server: make smoke-voice [SECONDS=5]
+	cd server && .venv/bin/python -m bahi.cli_voice --seconds "$(or $(SECONDS),5)"
+
+eval-audio-synth: ## generate synthetic eval audio with the profile's TTS
+	$(LOAD_ENV); \
+	cd server && .venv/bin/python -m bahi.evals.audio_synth --suite "$(or $(SUITE),audio_core)"
+
 mcp: ## run the ledger as a standalone stdio MCP server
 	cd server && .venv/bin/python -m bahi.mcp_server
 

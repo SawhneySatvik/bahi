@@ -92,6 +92,16 @@ def render(payloads: list[dict[str, Any]]) -> str:
     lines += ["", "| Metric | " + " | ".join(labels) + " |", "|---|" + "---|" * len(labels)]
     for key, name in PCT_METRICS + RAW_METRICS:
         lines.append(f"| {name} | " + " | ".join(_metric(p, key) for p in payloads) + " |")
+    if any(p["runs"][0]["aggregates"].get("wer_mean") is not None for p in payloads):
+        wer_cells = []
+        for p in payloads:
+            agg = p["runs"][0]["aggregates"]
+            wer_cells.append(
+                f"{agg['wer_mean']:.1%} ({agg['audio_turns']} clips)"
+                if agg.get("wer_mean") is not None
+                else "—"
+            )
+        lines.append("| WER, normalized (audio) | " + " | ".join(wer_cells) + " |")
     turns = [str(p["runs"][0]["aggregates"]["turns"]) for p in payloads]
     lines.append("| Turns evaluated | " + " | ".join(turns) + " |")
 

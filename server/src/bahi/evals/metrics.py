@@ -43,6 +43,7 @@ class TurnEval:
     input_tokens: int
     output_tokens: int
     cost_inr: float | None
+    wer: float | None = None  # audio turns only
     detail: dict[str, Any] = field(default_factory=dict)
 
 
@@ -58,6 +59,7 @@ def evaluate_turn(
     output_tokens: int,
     cost_inr: float | None,
     errored_tools: list[str] | None = None,
+    wer: float | None = None,
 ) -> TurnEval:
     gold = set(spec.gold_intents)
     if spec.gold_intents_any:
@@ -93,6 +95,7 @@ def evaluate_turn(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         cost_inr=cost_inr,
+        wer=wer,
         detail={
             "intents": intents,
             "gold_intents": sorted(gold),
@@ -129,6 +132,8 @@ class Aggregates:
     cost_per_turn_inr: float
     input_tokens: int
     output_tokens: int
+    audio_turns: int = 0
+    wer_mean: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return self.__dict__.copy()
@@ -139,7 +144,10 @@ def aggregate(turn_evals: list[TurnEval]) -> Aggregates:
     seconds = [t.seconds for t in turn_evals]
     priced = [t.cost_inr for t in turn_evals if t.cost_inr is not None]
     total_cost = sum(priced)
+    wers = [t.wer for t in turn_evals if t.wer is not None]
     return Aggregates(
+        audio_turns=len(wers),
+        wer_mean=round(sum(wers) / len(wers), 4) if wers else None,
         turns=len(turn_evals),
         intent_accuracy=sum(t.intents_ok for t in turn_evals) / n,
         tool_correctness=sum(t.tools_ok for t in turn_evals) / n,

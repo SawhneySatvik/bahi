@@ -44,6 +44,10 @@ class TurnSpec(BaseModel):
     gold_intents_any: list[str] = Field(default_factory=list)
     expected_tools: list[str] = Field(default_factory=list)
     expected_ledger_delta: list[ExpectedWrite] = Field(default_factory=list)
+    # --- audio turns (voice pipeline instead of text) ---
+    audio: str | None = None  # path relative to server/evals/audio/
+    gold_transcript: str | None = None  # WER reference; defaults to utterance
+    tts_text: str | None = None  # what audio_synth speaks; defaults to gold/utterance
 
     @model_validator(mode="after")
     def _merge_intent_sugar(self) -> TurnSpec:

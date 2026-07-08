@@ -33,5 +33,7 @@ out/
 .idea/
 .vscode/
 
-# eval artifacts (regenerated)
-server/evals/results/
+# eval artifacts (regenerated; result JSONs are force-added when cited)
+server/evals/results/*
+!server/evals/results/report.md
+server/evals/audio/synthetic/

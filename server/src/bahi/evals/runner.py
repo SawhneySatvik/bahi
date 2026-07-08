@@ -15,14 +15,19 @@ from typing import Any
 
 from sqlalchemy import select
 
+from bahi.api.audio import to_canonical_wav
 from bahi.config import get_settings
-from bahi.core.orchestrator import TurnEngine
+from bahi.core.orchestrator import TurnEngine, TurnResult
+from bahi.core.voice import VoiceLoop
 from bahi.evals import cost as cost_tables
 from bahi.evals.metrics import TurnEval, Write, aggregate, canonical_writes, evaluate_turn
-from bahi.evals.suite import CaseSpec, Suite
+from bahi.evals.suite import CaseSpec, Suite, TurnSpec
+from bahi.evals.wer import wer as compute_wer
 from bahi.ledger.db import _engines, get_engine, init_db, session_scope
 from bahi.ledger.models import Transaction
 from bahi.ledger.repository import LedgerRepository
+
+AUDIO_ROOT = Path(__file__).parents[3] / "evals" / "audio"
 
 
 def _snapshot(db_url: str) -> tuple[int, list[tuple[int, str, int, str | None]]]:
@@ -57,18 +62,47 @@ def _apply_given(case: CaseSpec, db_url: str, tz: str) -> None:
 def _turn_cost_inr(events: list[Any]) -> float | None:
     total, any_priced = 0.0, False
     for event in events:
-        if event.kind != "llm":
+        cost: float | None = None
+        if event.kind == "llm":
+            cost = cost_tables.llm_cost_inr(
+                str(event.detail.get("model", "")),
+                int(event.detail.get("input_tokens", 0)),
+                int(event.detail.get("output_tokens", 0)),
+            )
+        elif event.kind == "stt":
+            cost = cost_tables.stt_cost_inr(
+                str(event.detail.get("provider", "")),
+                float(event.detail.get("audio_seconds", 0.0)),
+            )
+        elif event.kind == "tts":
+            cost = cost_tables.tts_cost_inr(
+                str(event.detail.get("provider", "")),
+                int(event.detail.get("characters", 0)),
+                float(event.detail.get("audio_seconds", 0.0)),
+            )
+        else:
             continue
-        cost = cost_tables.llm_cost_inr(
-            str(event.detail.get("model", "")),
-            int(event.detail.get("input_tokens", 0)),
-            int(event.detail.get("output_tokens", 0)),
-        )
         if cost is None:
             return None
         total += cost
         any_priced = True
     return total if any_priced else 0.0
+
+
+def _run_one_turn(
+    spec: TurnSpec, engine: TurnEngine, voice: VoiceLoop | None
+) -> tuple[TurnResult, float, float | None]:
+    """Returns (turn_result, wall_seconds, wer_or_None)."""
+    if spec.audio and voice is not None:
+        raw = (AUDIO_ROOT / spec.audio).read_bytes()
+        voice_result = voice.run(to_canonical_wav(raw))
+        reference = spec.gold_transcript or spec.utterance
+        return (
+            voice_result.turn,
+            voice_result.total_seconds,
+            compute_wer(reference, voice_result.transcript),
+        )
+    return (result := engine.run_text_turn(spec.utterance)), result.seconds, None
 
 
 def run_case(case: CaseSpec, sleep_s: float) -> list[TurnEval]:
@@ -82,11 +116,16 @@ def run_case(case: CaseSpec, sleep_s: float) -> list[TurnEval]:
     _apply_given(case, db_url, settings.tz)
 
     engine = TurnEngine.from_settings(settings)
+    voice = (
+        VoiceLoop.from_settings(settings, engine=engine)
+        if any(t.audio for t in case.turns)
+        else None
+    )
     evals: list[TurnEval] = []
     for spec in case.turns:
         prev_max_id, _ = _snapshot(db_url)
         try:
-            result = engine.run_text_turn(spec.utterance)
+            result, wall_seconds, turn_wer = _run_one_turn(spec, engine, voice)
         except Exception as exc:  # noqa: BLE001 — one flaky call must not kill a 40-case run
             evals.append(
                 evaluate_turn(
@@ -123,11 +162,12 @@ def run_case(case: CaseSpec, sleep_s: float) -> list[TurnEval]:
                 errored_tools=errored_tools,
                 delta=delta,
                 reply=result.reply,
-                seconds=result.seconds,
+                seconds=wall_seconds,
                 llm_seconds=llm_seconds,
                 input_tokens=result.input_tokens,
                 output_tokens=result.output_tokens,
                 cost_inr=_turn_cost_inr(result.events),
+                wer=turn_wer,
             )
         )
         if sleep_s:
@@ -167,6 +207,7 @@ def run_suite(
                             "task_ok": e.task_ok,
                             "seconds": round(e.seconds, 3),
                             "cost_inr": e.cost_inr,
+                            "wer": e.wer,
                             "detail": e.detail,
                         }
                         for e in evals
