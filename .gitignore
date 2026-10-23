@@ -43,3 +43,8 @@ KICKOFF_PROMPT.md
 server/evals/results/*
 !server/evals/results/report.md
 server/evals/audio/synthetic/
+
+# vercel
+.vercel
+.env*
+!.env.example

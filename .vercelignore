@@ -1,0 +1,11 @@
+# Allowlist: ship only the MCP function and the code it imports (never .env).
+/*
+!api
+!vercel.json
+!requirements.txt
+!server
+server/*
+!server/src
+!server/scripts
+**/__pycache__
+**/*.db
