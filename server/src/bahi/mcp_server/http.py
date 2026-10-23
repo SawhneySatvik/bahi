@@ -19,9 +19,12 @@ Run:  BAHI_MCP_PORT=8765 python -m bahi.mcp_server.http   → http://0.0.0.0:876
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 from mcp.server.transport_security import TransportSecuritySettings
+from starlette.requests import Request
+from starlette.responses import HTMLResponse, Response
 
 from bahi.config import get_settings
 from bahi.ledger.db import init_db, session_scope
@@ -115,6 +118,12 @@ def build_http_server(host: str, port: int) -> Any:
     )
     for fn in VOICE_TOOL_FUNCTIONS:
         server.add_tool(fn)
+
+    @server.custom_route("/", methods=["GET"])
+    async def echo_show(_: Request) -> Response:
+        # Simulated Echo Show: a browser MCP client against /mcp on this same origin.
+        return HTMLResponse((Path(__file__).parent / "echo_show.html").read_text(encoding="utf-8"))
+
     return server
 
 

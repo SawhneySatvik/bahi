@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bahi on Echo Show</title>
+<style>
+  :root {
+    --bg: #0f0d0b; --frame: #1b1815; --screen: #f6efe3; --ink: #2a1d14; --muted: #7a6656;
+    --red: #b3261e; --green: #1f7a4a; --gold: #c8932e; --card: #fffaf1; --line: #e6d8c3;
+    --wire-bg: #14110e; --wire-ink: #d9cbb5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+         min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px 16px; gap: 16px; }
+  .label { color: #b9a68e; font-size: 13px; letter-spacing: .02em; text-align: center; }
+  .label b { color: #f1e4cf; }
+  .device { width: min(1024px, 100%); background: var(--frame); border-radius: 28px; padding: 18px; box-shadow: 0 30px 80px #000a; }
+  .screen { background: var(--screen); border-radius: 14px; aspect-ratio: 1024 / 600; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; }
+  .top { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px 0; color: var(--muted); font-size: 14px; }
+  .brand { font-weight: 700; color: var(--red); letter-spacing: .04em; }
+  .stage { padding: 10px 22px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+  .heard { font-size: clamp(16px, 2.2vw, 22px); color: var(--muted); font-style: italic; min-height: 1.4em; }
+  .reply { font-size: clamp(20px, 3vw, 32px); font-weight: 600; line-height: 1.25; }
+  .cards { display: flex; gap: 12px; flex-wrap: wrap; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; min-width: 150px; flex: 1; }
+  .card .k { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .card .v { font-size: clamp(20px, 2.6vw, 30px); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .v.red { color: var(--red); } .v.green { color: var(--green); }
+  .rows { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .rows td { padding: 6px 4px; border-bottom: 1px dashed var(--line); }
+  .rows td:last-child { text-align: right; font-weight: 600; }
+  .bar { display: flex; gap: 10px; align-items: center; padding: 12px 22px 16px; border-top: 1px solid var(--line); }
+  .mic { width: 54px; height: 54px; border-radius: 50%; border: 0; background: var(--ink); color: #fff; font-size: 22px; cursor: pointer; flex: none; }
+  .mic.on { background: #1a73e8; box-shadow: 0 0 0 6px #1a73e855; }
+  .bar input { flex: 1; min-width: 0; font: inherit; padding: 12px 14px; border-radius: 999px; border: 1px solid var(--line); background: #fff; }
+  .chips { width: min(1024px, 100%); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip { background: #2a2420; color: #f1e4cf; border: 1px solid #3a322c; border-radius: 999px; padding: 8px 14px; cursor: pointer; font: inherit; font-size: 14px; }
+  .chip:hover { border-color: var(--gold); }
+  details { width: min(1024px, 100%); }
+  summary { color: #b9a68e; cursor: pointer; font-size: 13px; }
+  pre { background: var(--wire-bg); color: var(--wire-ink); border-radius: 10px; padding: 12px; font-size: 12px; max-height: 260px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+  .ring { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #3b3; margin-right: 6px; }
+  .ring.off { background: #b33; }
+  @media (max-width: 640px) { .screen { aspect-ratio: auto; min-height: 70vh; } }
+</style>
+</head>
+<body>
+  <div class="label"><b>Simulated Alexa+ on Echo Show</b> · a real MCP client (Streamable HTTP, spec 2025-11-25) talking to the Bahi ledger server</div>
+
+  <div class="device"><div class="screen">
+    <div class="top"><span class="brand">BAHI · बही खाता</span><span id="status"><span class="ring off"></span>connecting…</span></div>
+    <div class="stage">
+      <div class="heard" id="heard">Try: "Aaj ka hisaab batao"</div>
+      <div class="reply" id="reply">Namaste! Ask me about today's takings or who owes you money.</div>
+      <div id="cards"></div>
+    </div>
+    <div class="bar">
+      <button class="mic" id="mic" title="Speak (en-IN)">🎙</button>
+      <input id="text" placeholder="Type what the owner says, then Enter" autocomplete="off">
+    </div>
+  </div></div>
+
+  <div class="chips" id="chips"></div>
+  <details open><summary>MCP wire log (JSON-RPC over Streamable HTTP)</summary><pre id="wire"></pre></details>
+
+<script>
+const MCP_URL = new URL("mcp", location.href.replace(/[^/]*$/, "")).href;
+const PROTOCOL = "2025-11-25";
+let rpcId = 0, negotiated = null;
+const $ = (id) => document.getElementById(id);
+
+function logWire(dir, obj) {
+  const line = `${dir} ${JSON.stringify(obj).slice(0, 700)}\n`;
+  $("wire").textContent = line + $("wire").textContent.slice(0, 20000);
+}
+
+async function rpc(method, params, notify = false) {
+  const msg = { jsonrpc: "2.0", method, ...(params ? { params } : {}), ...(notify ? {} : { id: ++rpcId }) };
+  logWire("→", msg);
+  const headers = { "Content-Type": "application/json", "Accept": "application/json, text/event-stream" };
+  if (negotiated) headers["MCP-Protocol-Version"] = negotiated;
+  const res = await fetch(MCP_URL, { method: "POST", headers, body: JSON.stringify(msg) });
+  if (notify) return null;
+  const ctype = res.headers.get("content-type") || "";
+  let body;
+  if (ctype.includes("text/event-stream")) {
+    const text = await res.text();
+    const data = text.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim()).pop();
+    body = JSON.parse(data);
+  } else {
+    body = await res.json();
+  }
+  logWire("←", body);
+  if (body.error) throw new Error(body.error.message);
+  return body.result;
+}
+
+async function connect() {
+  const init = await rpc("initialize", {
+    protocolVersion: PROTOCOL, capabilities: {},
+    clientInfo: { name: "bahi-echo-show-sim", version: "0.1.0" },
+  });
+  negotiated = init.protocolVersion;
+  await rpc("notifications/initialized", undefined, true);
+  const tools = await rpc("tools/list", {});
+  $("status").innerHTML = `<span class="ring"></span>${init.serverInfo.name} · MCP ${negotiated} · ${tools.tools.length} tools`;
+}
+
+async function callTool(name, args) {
+  const r = await rpc("tools/call", { name, arguments: args });
+  const text = (r.content || []).map((c) => c.text || "").join(" ");
+  return { ok: !r.isError, data: r.structuredContent || safeJson(text), text };
+}
+function safeJson(t) { try { return JSON.parse(t); } catch { return {}; } }
+
+// ---- Hinglish / English amount + name parsing (the simulated "Alexa" NLU) ----
+const NUM = { ek: 1, one: 1, do: 2, two: 2, teen: 3, three: 3, char: 4, chaar: 4, four: 4, paanch: 5, panch: 5, five: 5,
+  chhe: 6, che: 6, six: 6, saat: 7, seven: 7, aath: 8, eight: 8, nau: 9, nine: 9, das: 10, ten: 10, bees: 20, twenty: 20,
+  tees: 30, chalis: 40, pachaas: 50, pachas: 50, fifty: 50 };
+function parseRupees(s) {
+  s = s.toLowerCase().replace(/[₹,]/g, " ");
+  const d = s.match(/(\d+(?:\.\d+)?)\s*(sau|hundred|hazaar|hazar|thousand|k\b)?/);
+  if (d) {
+    let n = parseFloat(d[1]);
+    if (/sau|hundred/.test(d[2] || "")) n *= 100;
+    if (/hazaar|hazar|thousand|k/.test(d[2] || "")) n *= 1000;
+    return Math.round(n * 100);
+  }
+  if (/\bdedh\s*(sau|hundred)/.test(s)) return 150_00;
+  if (/\bdh?aa?i\s*(sau|hundred)/.test(s)) return 250_00;
+  const w = s.match(/\b(saade\s+)?([a-z]+)\s+(sau|hundred|hazaar|hazar|thousand)\b/);
+  if (w && NUM[w[2]]) {
+    let n = NUM[w[2]] + (w[1] ? 0.5 : 0);
+    n *= /sau|hundred/.test(w[3]) ? 100 : 1000;
+    return Math.round(n * 100);
+  }
+  if (/\b(sau|hundred)\b/.test(s)) return 100_00;
+  const lone = s.split(/\s+/).find((t) => NUM[t]);
+  return lone ? NUM[lone] * 100 : null;
+}
+function parseName(s) {
+  const pats = [/([A-Z][a-z]+)\s+(?:ko|ne|ka|ki|ke)\b/, /\b(?:on|for|to|does)\s+([A-Z][a-z]+)/, /([A-Z][a-z]+)\s+(?:paid|owes|gave)/];
+  for (const p of pats) { const m = s.match(p); if (m) return m[1]; }
+  return null;
+}
+function route(s) {
+  const t = s.toLowerCase();
+  if (/kis\s*kis|who owes|debtors|sab ka udh|list.*udh/.test(t)) return ["list_debtors", {}];
+  if (/last entry|aakhri|akhri|recent|abhi kya likha/.test(t)) return ["recent_activity", { limit: 5 }];
+  if (/hisaab|hisab|how.*(shop|doing|business)|brief|summary|aaj ka/.test(t)) return ["shop_brief", {}];
+  const name = parseName(s), amt = parseRupees(s);
+  if (/kitna|how much|balance|baaki|baki/.test(t) && name && !/wapas|paid|diye|likh/.test(t)) return ["get_balance", { customer_name: name }];
+  if (/wapas|paid|lauta|jama|repa(y|id)|returned/.test(t)) return name && amt ? ["record_repayment", { customer_name: name, amount_paise: amt }] : ["ask", "Kisne kitna wapas diya? Name aur amount bataiye."];
+  if (/udh?aa?r|credit|likh|on .*account/.test(t)) return name && amt ? ["add_udhaar", { customer_name: name, amount_paise: amt }] : ["ask", "Kiske naam pe, kitna? Name aur amount bataiye."];
+  if (/becha|bech|sold|sale|bikri/.test(t)) return amt ? ["add_sale", { amount_paise: amt }] : ["ask", "Kitne ka becha?"];
+  return ["ask", "Sorry, I didn't catch that. Try \"aaj ka hisaab batao\"."];
+}
+
+// ---- rendering ----
+const r0 = (x) => String(x ?? "").replace(/\.00\b/g, "");
+function card(k, v, cls = "") { return `<div class="card"><div class="k">${k}</div><div class="v ${cls}">${r0(v)}</div></div>`; }
+function rowsCard(title, rows) {
+  return `<div class="card" style="flex-basis:100%"><div class="k">${title}</div><table class="rows">${
+    rows.map(([a, b]) => `<tr><td>${a}</td><td>${r0(b)}</td></tr>`).join("")}</table></div>`;
+}
+function render(tool, d) {
+  switch (tool) {
+    case "shop_brief":
+      return [d.speech, `<div class="cards">${card("Sales today", d.sales, "green")}${card("Udhaar given", d.udhaar_given, "red")}${card("Repayments", d.repayments_received, "green")}${card("Cash in", d.cash_in)}</div>
+        <div class="cards">${rowsCard(`Owed to you · ${r0(d.total_outstanding)} from ${d.debtor_count}`, d.top_debtors.map((x) => [x.customer, x.balance]))}</div>`];
+    case "add_udhaar":
+      return [`Done — ${d.customer} now owes ${d.new_balance}.`, `<div class="cards">${card(`Udhaar · ${d.customer}`, "+" + d.amount, "red")}${card("New balance", d.new_balance)}</div>`];
+    case "record_repayment":
+      return [`Got it — ${d.customer} paid ${d.amount}. ${d.remaining_balance} is still due.`, `<div class="cards">${card(`Repayment · ${d.customer}`, d.amount, "green")}${card("Still due", d.remaining_balance)}</div>`];
+    case "add_sale":
+      return [`Sale of ${d.amount} recorded.`, `<div class="cards">${card("Sale", d.amount, "green")}${card("Entry", "#" + d.transaction_id)}</div>`];
+    case "get_balance":
+      return [`${d.customer} owes you ${d.balance}.`, `<div class="cards">${card(d.customer, d.balance, "red")}</div>`];
+    case "list_debtors":
+      return [`${d.debtors.length} people owe you ${d.total_outstanding} in total.`, `<div class="cards">${rowsCard(`Owed to you · ${r0(d.total_outstanding)}`, d.debtors.map((x) => [x.customer, x.balance]))}</div>`];
+    case "recent_activity":
+      return [d.speech, `<div class="cards">${rowsCard("Latest entries", d.entries.map((e) => [`${e.type}${e.customer ? " · " + e.customer : ""}`, e.amount]))}</div>`];
+  }
+  return ["", ""];
+}
+
+function speak(text) {
+  if (!("speechSynthesis" in window) || !text) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(r0(text).replace(/₹\s?/g, "rupees "));
+  u.lang = "en-IN";
+  speechSynthesis.speak(u);
+}
+
+async function handle(utterance) {
+  if (!utterance.trim()) return;
+  $("heard").textContent = `“${utterance}”`;
+  const [tool, args] = route(utterance);
+  if (tool === "ask") { $("reply").textContent = args; $("cards").innerHTML = ""; speak(args); return; }
+  try {
+    const res = await callTool(tool, args);
+    if (!res.ok) {
+      const msg = res.text.replace(/^Error executing tool \w+:\s*/, "");
+      $("reply").textContent = msg; $("cards").innerHTML = ""; speak(msg); return;
+    }
+    const [say, html] = render(tool, res.data);
+    $("reply").textContent = r0(say); $("cards").innerHTML = html; speak(say);
+  } catch (e) {
+    $("reply").textContent = "Couldn't reach the shop ledger: " + e.message;
+  }
+}
+
+// ---- input ----
+$("text").addEventListener("keydown", (e) => { if (e.key === "Enter") { handle(e.target.value); e.target.value = ""; } });
+[
+  "Aaj ka hisaab batao", "Ramesh ko do sau ka udhaar likh do", "Sunita ne sau rupaye wapas diye",
+  "Kis kis ka udhaar baaki hai?", "Ramesh ka kitna baaki hai?", "Ek atta becha 280 ka", "Last entry kya thi?",
+].forEach((p) => {
+  const b = document.createElement("button"); b.className = "chip"; b.textContent = p; b.onclick = () => handle(p);
+  $("chips").appendChild(b);
+});
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SR) {
+  const rec = new SR(); rec.lang = "en-IN"; rec.interimResults = false;
+  rec.onresult = (e) => handle(e.results[0][0].transcript);
+  rec.onend = () => $("mic").classList.remove("on");
+  $("mic").onclick = () => { $("mic").classList.add("on"); rec.start(); };
+} else {
+  $("mic").title = "Voice input needs Chrome"; $("mic").style.opacity = .4;
+}
+connect().catch((e) => { $("status").innerHTML = `<span class="ring off"></span>offline: ${e.message}`; });
+</script>
+</body>
+</html>

@@ -19,6 +19,7 @@ plus an **Agent Skill** (`skills/bahi-khata/SKILL.md`) that teaches the assistan
 ```bash
 make setup && make mcp-seed && make mcp-http      # → http://0.0.0.0:8765/mcp
 make mcp-check                                     # initialize (asserts 2025-11-25) → tools/list → tools/call
+open http://127.0.0.1:8765/                         # simulated Echo Show: a browser MCP client with voice in/out
 cloudflared tunnel --url http://127.0.0.1:8765     # public URL for an Alexa+/MCP client
 claude mcp add --transport http bahi https://<tunnel>/mcp   # or any MCP client / MCP Inspector
 ```
@@ -31,7 +32,7 @@ claude mcp add --transport http bahi https://<tunnel>/mcp   # or any MCP client 
 | `get_balance`, `list_debtors`, `day_summary`, `find_customer` | reads |
 
 **Built during the hackathon window (23 Oct 2026):** Streamable HTTP entry point (`server/src/bahi/mcp_server/http.py`),
-the voice-first `shop_brief` / `recent_activity` tools with ready-to-speak `speech` fields, the Agent Skill, the
+the simulated Echo Show client (`server/src/bahi/mcp_server/echo_show.html`, a real MCP client over Streamable HTTP with Web Speech voice in/out and ledger cards), the voice-first `shop_brief` / `recent_activity` tools with ready-to-speak `speech` fields, the Agent Skill, the
 end-to-end protocol check (`server/scripts/mcp_http_check.py`), demo seed, and the move to MCP SDK 1.23+ (spec 2025-11-25).
 Everything else (ledger, agents, providers, evals, console) existed before.
 
