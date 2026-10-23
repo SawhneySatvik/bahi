@@ -72,6 +72,15 @@ client-check: ## client gate: eslint + tsc + production build
 mcp: ## run the ledger as a standalone stdio MCP server
 	cd server && .venv/bin/python -m bahi.mcp_server
 
+mcp-http: ## Alexa+: ledger MCP over Streamable HTTP (spec 2025-11-25) on :8765/mcp
+	cd server && .venv/bin/python -m bahi.mcp_server.http
+
+mcp-seed: ## seed a demo kirana day into the ledger
+	cd server && .venv/bin/python scripts/seed_demo.py
+
+mcp-check: ## initialize → tools/list → tools/call against URL (default local)
+	cd server && .venv/bin/python scripts/mcp_http_check.py $(URL)
+
 migrate: ## apply alembic migrations to DATABASE_URL
 	cd server && .venv/bin/alembic upgrade head
 

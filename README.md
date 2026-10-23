@@ -10,6 +10,31 @@ Built with [Claude Code](https://claude.com/claude-code).
 
 ---
 
+## Alexa+ (Amazon Developer Hackathon, Oct 2026)
+
+Bahi's ledger is now an **Alexa+ integration**: a self-hosted MCP server on **Streamable HTTP, spec 2025-11-25**,
+plus an **Agent Skill** (`skills/bahi-khata/SKILL.md`) that teaches the assistant how a shopkeeper talks
+("Ramesh ko do sau ka udhaar likh do", "aaj ka hisaab batao").
+
+```bash
+make setup && make mcp-seed && make mcp-http      # → http://0.0.0.0:8765/mcp
+make mcp-check                                     # initialize (asserts 2025-11-25) → tools/list → tools/call
+cloudflared tunnel --url http://127.0.0.1:8765     # public URL for an Alexa+/MCP client
+claude mcp add --transport http bahi https://<tunnel>/mcp   # or any MCP client / MCP Inspector
+```
+
+| Tool | What the owner says |
+|---|---|
+| `shop_brief` *(new)* | "how is the shop doing?" → one spoken sentence (`speech`) + structured numbers |
+| `recent_activity` *(new)* | "what was the last entry?" |
+| `add_sale`, `add_udhaar`, `record_repayment` | writes, confirmed with the new balance |
+| `get_balance`, `list_debtors`, `day_summary`, `find_customer` | reads |
+
+**Built during the hackathon window (23 Oct 2026):** Streamable HTTP entry point (`server/src/bahi/mcp_server/http.py`),
+the voice-first `shop_brief` / `recent_activity` tools with ready-to-speak `speech` fields, the Agent Skill, the
+end-to-end protocol check (`server/scripts/mcp_http_check.py`), demo seed, and the move to MCP SDK 1.23+ (spec 2025-11-25).
+Everything else (ledger, agents, providers, evals, console) existed before.
+
 ## Why it's built this way
 
 - **Provider-blind core.** The orchestrator, specialist agents, ledger, and eval harness speak only to `STTProvider` / `TTSProvider` / `LLMProvider` / `VisionProvider` protocols. No vendor SDK is imported outside its adapter module — a test (`test_no_network_imports.py`) enforces it.
